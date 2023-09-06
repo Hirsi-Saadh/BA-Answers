@@ -1,0 +1,148 @@
+#import the dataset
+unclean.data <- read.csv("energy_efficiency_data.csv")
+
+#data preprocessing
+energy_data <- na.omit(unclean.data)
+
+#data row count
+nrow(energy_data)
+
+#data column count
+ncol(energy_data)
+
+#head of the dataset
+head_energy <- head(energy_data)
+
+print(head_energy)
+
+
+library(ggplot2)
+
+# Select numerical columns for visualization
+numerical_cols <- c("Relative_Compactness", "Surface_Area", "Wall_Area", "Roof_Area", "Overall_Height",
+                    "Orientation", "Glazing_Area", "Glazing_Area_Distribution", "Heating_Load", "Cooling_Load")
+
+# Create histograms for all numerical columns
+histograms <- lapply(numerical_cols, function(col) {
+  ggplot(energy_data, aes(x = .data[[col]])) +
+    geom_histogram(binwidth = 0.5, fill = "dodgerblue", color = "black") +
+    labs(x = col, y = "Frequency") +
+    theme_minimal()
+})
+
+# Arrange histograms in a grid
+library(gridExtra)
+grid.arrange(grobs = histograms, ncol = 2)
+
+
+# Select numerical columns for visualization
+numerical_cols <- c("Relative_Compactness", "Surface_Area", "Wall_Area", "Roof_Area", "Overall_Height",
+                    "Orientation", "Glazing_Area", "Glazing_Area_Distribution", "Heating_Load", "Cooling_Load")
+
+# Subset of numerical columns to create scatterplots with Cooling_Load
+scatterplot_cols <- numerical_cols[!numerical_cols %in% c("Cooling_Load")]
+
+# Create scatterplots for each column against Cooling_Load
+scatterplots <- lapply(scatterplot_cols, function(col) {
+  ggplot(energy_data, aes(x = .data[[col]], y = Cooling_Load)) +
+    geom_point(color = "dodgerblue") +
+    geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add linear regression line
+    labs(x = col, y = "Cooling Load") +
+    theme_minimal()
+})
+
+# Arrange scatterplots in a grid
+grid.arrange(grobs = scatterplots, ncol = 2)
+
+
+ggplot(energy_data, aes(x = Heating_Load)) +
+  geom_histogram(binwidth = 2, fill = "dodgerblue", color = "black") +
+  labs(x = "Heating Load") +
+  theme_minimal()
+
+
+
+# Import the necessary packages
+install.packages("psych")
+library(psych)
+
+# Calculate correlation coefficients and their significance levels
+correlation_results <- cor.test(energy_data$Cooling_Load, energy_data$Relative_Compactness)
+print(correlation_results)
+
+# Perform correlation tests for other factors
+factors <- c("Relative_Compactness", "Surface_Area", "Wall_Area", "Roof_Area", "Overall_Height", "Glazing_Area", "Glazing_Area_Distribution")
+
+for (factor in factors) {
+  correlation_results <- cor.test(energy_data$Cooling_Load, energy_data[[factor]])
+  cat("Correlation Test between Cooling_Load and", factor, "\n")
+  print(correlation_results)
+  cat("\n")
+}
+
+
+# Calculate the correlation matrix
+correlation_matrix <- cor(energy_data[, factors])
+
+# Print the correlation matrix
+print(correlation_matrix)
+
+library(corrplot)
+#correlation heatmap
+corrplot(correlation_matrix, method = "color", tl.col = "black")
+
+
+# Install and load the necessary packages if not already installed
+install.packages("knitr")
+library(knitr)
+
+# Display the head of the dataset as a formatted table
+kable(head_energy, caption = "Head of Energy Efficiency Data") %>%
+  kable_classic(full_width = FALSE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+summary(energy_data)
+
+
+# Install and load the nortest package if not already installed
+# install.packages("nortest")
+library(nortest)
+
+# Perform Shapiro-Wilk test
+shapiro.test(Cooling_Load)
+
+# Perform Anderson-Darling test
+ad.test(Cooling_Load)
+
+# Plot histogram with overlaid normal distribution
+hist(Cooling_Load, breaks = 20, col = "lightblue", main = "Histogram of Cooling Load")
+curve(dnorm(x, mean = mean(Cooling_Load), sd = sd(Cooling_Load)), add = TRUE, col = "red")
+
+#bell curve
+y <- dnorm(Cooling_Load, mean = mean(Cooling_Load), sd = sd(Cooling_Load))
+plot(Cooling_Load, y)
+
+#relationship among
+statistical.model <- lm(Cooling_Load ~ Relative_Compactness + Surface_Area + Wall_Area + Roof_Area + Overall_Height , data = energy_data)
+print(summary(statistical.model))
+
+#linear regression model
+rep.statistical.model <- lm(Cooling_Load ~ Relative_Compactness + Surface_Area + 
+                              Wall_Area + Overall_Height , data = energy_data)
+
+print(summary(rep.statistical.model))
+
+print(rep.statistical.model)
+
+# Shapiro-Wilk test for normality
+shapiro.test(resid(rep.statistical.model))
+
+# Create a Q-Q plot
+ggplot(data = NULL, aes(sample = resid(rep.statistical.model))) +
+  geom_qq() +
+  geom_qq_line() +
+  labs(title = "Q-Q Plot of Residuals", x = "Theoretical Quantiles", y = "Sample Quantiles")
+
+
+
+
